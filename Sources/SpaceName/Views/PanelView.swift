@@ -2,8 +2,9 @@ import AppKit
 import SwiftUI
 
 enum Theme {
-    /// The user's system accent color, like the system's own menus.
-    static let accent = Color.accentColor
+    /// The user's system accent color, like the system's own menus. A variable only
+    /// so the README screenshot renderer can show a fixed color.
+    static var accent = Color.accentColor
     static let rowHeight: CGFloat = 36
 }
 

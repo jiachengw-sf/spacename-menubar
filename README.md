@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/jiachengw-sf/spacename-menubar?label=release&color=8A47A0" alt="Latest release">
+  <img src="https://img.shields.io/github/v/release/jiachengw-sf/spacename-menubar?label=release&color=E3685E" alt="Latest release">
   <img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Apple%20silicon%20%2B%20Intel-universal-555555" alt="Universal app">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
