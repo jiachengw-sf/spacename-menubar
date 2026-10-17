@@ -120,7 +120,7 @@ struct SetupBanner: View {
 
     private var title: String {
         switch problem {
-        case .needsPermission: return "Permission needed to switch Spaces"
+        case .needsPermission: return "Permission needed"
         case .noShortcut(let name): return "Can't switch to \(name)"
         }
     }
@@ -128,8 +128,8 @@ struct SetupBanner: View {
     private var message: String {
         switch problem {
         case .needsPermission:
-            return "SpaceName switches Spaces by pressing your Mission Control shortcuts. "
-                + "Allow it in System Settings › Privacy & Security › Accessibility. If SpaceName is "
+            return "Switching Spaces and showing your names in Mission Control need Accessibility "
+                + "permission. Allow it in System Settings › Privacy & Security › Accessibility. If SpaceName is "
                 + "already listed and on, remove it (−) and add it again; a rebuilt app needs a fresh grant."
         case .noShortcut:
             return "Turn on \"Switch to Desktop N\" (or \"Move left/right a space\") in "

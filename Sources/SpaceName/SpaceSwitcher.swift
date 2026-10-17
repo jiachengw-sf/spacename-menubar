@@ -39,7 +39,9 @@ final class SpaceSwitcher: ObservableObject {
 
     // MARK: Public
 
-    var hasPermission: Bool { CGPreflightPostEventAccess() }
+    /// Posting shortcuts needs post-event access; the Mission Control names need
+    /// Accessibility. Granting Accessibility normally covers both.
+    var hasPermission: Bool { CGPreflightPostEventAccess() && AXIsProcessTrusted() }
 
     func requestPermission() {
         // Shows the system prompt the first time; afterwards it's a no-op, so also open Settings.
@@ -94,6 +96,13 @@ final class SpaceSwitcher: ObservableObject {
         problem = .noShortcut(spaceName: displayName)
         return false
     }
+
+    #if DEBUG
+    /// Debug builds only: presses the Mission Control shortcut (symbolic hotkey 32).
+    func debugToggleMissionControl() {
+        post(hotkey(id: 32) ?? Hotkey(keyCode: 126, flags: CGEventFlags(rawValue: Self.arrowFlags)))
+    }
+    #endif
 
     // MARK: Shortcut lookup
 

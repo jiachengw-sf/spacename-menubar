@@ -83,6 +83,8 @@ final class PanelController {
     func show(below button: NSStatusBarButton) {
         guard let window = button.window else { return }
         model.refresh()
+        // Say up front that switching and Mission Control names are off, instead of failing silently.
+        if !switcher.hasPermission { switcher.problem = .needsPermission }
         anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
         layout()
         panel.makeKeyAndOrderFront(nil)

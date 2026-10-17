@@ -45,7 +45,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Debug builds only: lets a script test switching without clicking. Post the
     /// distributed notification "com.jiacheng.SpaceName.debug.switch" with object = row index (0-based).
     private func installDebugSwitchTrigger() {
-        DistributedNotificationCenter.default().addObserver(
+        let center = DistributedNotificationCenter.default()
+        // "com.jiacheng.SpaceName.debug.missioncontrol": press the Mission Control shortcut.
+        center.addObserver(forName: Notification.Name("com.jiacheng.SpaceName.debug.missioncontrol"),
+                           object: nil, queue: .main) { [weak self] _ in
+            self?.switcher.debugToggleMissionControl()
+        }
+        // "com.jiacheng.SpaceName.debug.mouse" with object "x,y" (top-left origin): move the pointer.
+        center.addObserver(forName: Notification.Name("com.jiacheng.SpaceName.debug.mouse"),
+                           object: nil, queue: .main) { note in
+            let parts = (note.object as? String)?.split(separator: ",").compactMap { Double($0) } ?? []
+            guard parts.count == 2 else { return }
+            let point = CGPoint(x: parts[0], y: parts[1])
+            CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: point,
+                    mouseButton: .left)?.post(tap: .cghidEventTap)
+        }
+        center.addObserver(
             forName: Notification.Name("com.jiacheng.SpaceName.debug.switch"), object: nil, queue: .main
         ) { [weak self] note in
             guard let self, let index = (note.object as? String).flatMap(Int.init) else { return }

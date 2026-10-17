@@ -30,7 +30,15 @@ final class MissionControlOverlay {
         self.store = store
     }
 
+    /// Keeps App Nap from throttling the poll timer. A windowless menu bar app is
+    /// napped soon after launch, and then Mission Control opening goes unnoticed.
+    private var activity: NSObjectProtocol?
+
     func start() {
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep],
+            reason: "Watch for Mission Control to show Space names")
+        ProcessInfo.processInfo.disableAutomaticTermination("Menu bar app")
         schedule(interval: Self.idleInterval)
     }
 
@@ -55,6 +63,10 @@ final class MissionControlOverlay {
             isTracking = true
             loggedMismatch = false
             schedule(interval: Self.trackingInterval)
+            for bar in bars {
+                let buttons = bar.buttons.map { "\($0.title)@\(Int($0.frame.minX)),\(Int($0.frame.minY)) \(Int($0.frame.width))x\(Int($0.frame.height))" }
+                log.debug("Mission Control opened; display \(bar.displayID ?? 0): \(buttons.joined(separator: " | "), privacy: .public)")
+            }
         }
         render(bars)
     }
@@ -79,6 +91,7 @@ final class MissionControlOverlay {
                 guard let screen = Self.screen(containing: button.frame) else { continue }
                 let tag = OverlayTag(id: uuid,
                                      frame: Self.localFrame(button.frame, in: screen),
+                                     coverWidth: Self.labelWidth(button.title),
                                      text: entry.name ?? space.defaultName,
                                      style: entry.style)
                 tagsByScreen[screen.displayID, default: []].append(tag)
@@ -109,6 +122,13 @@ final class MissionControlOverlay {
 
     private func hideAll() {
         windows.values.forEach { $0.orderOut(nil) }
+    }
+
+    /// Width of Mission Control's own label (e.g. "Desktop 6"), so a shorter
+    /// custom name still hides it completely.
+    private static func labelWidth(_ title: String) -> CGFloat {
+        let font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        return ceil((title as NSString).size(withAttributes: [.font: font]).width) + 20
     }
 
     // MARK: Coordinates
@@ -161,6 +181,8 @@ struct OverlayTag: Identifiable, Equatable {
     let id: String
     /// The Dock button's frame in window coordinates (top-left origin).
     let frame: CGRect
+    /// Minimum tag width that hides the Dock's own label.
+    let coverWidth: CGFloat
     let text: String
     let style: LabelStyle
 }
@@ -192,7 +214,7 @@ private struct OverlayTagView: View {
             .foregroundStyle(Color(nsColor: tag.style.color ?? .white))
             .lineLimit(1)
             .padding(.horizontal, 8)
-            .frame(minWidth: isExpanded ? nil : tag.frame.width,
+            .frame(minWidth: isExpanded ? tag.coverWidth : max(tag.frame.width, tag.coverWidth),
                    minHeight: isExpanded ? 22 : tag.frame.height)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(white: 0.2, opacity: 0.96)))
             .fixedSize()
