@@ -1,7 +1,8 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Global shortcuts ⌃⌥1 … ⌃⌥9 that jump to desktop 1–9 on the menu bar display.
+/// Global shortcuts ⌥1 … ⌥9 that jump to desktop 1–9 on the menu bar display.
+/// While on, Option-number no longer types its special character (™, •, …).
 /// Uses Carbon's RegisterEventHotKey, which needs no extra permission.
 final class DesktopHotkeys {
     static let enabledKey = "desktopShortcutsEnabled"
@@ -16,10 +17,10 @@ final class DesktopHotkeys {
         }
     }
 
-    /// Menu-style label, e.g. "⌃⌥3"; nil if that desktop has no shortcut.
+    /// Menu-style label, e.g. "⌥3"; nil if that desktop has no shortcut.
     static func label(forDesktop number: Int?) -> String? {
         guard isEnabled, let number, range.contains(number) else { return nil }
-        return "⌃⌥\(number)"
+        return "⌥\(number)"
     }
 
     private static let signature: OSType = 0x53504E4D   // "SPNM"
@@ -53,17 +54,17 @@ final class DesktopHotkeys {
         for number in Self.range {
             var ref: EventHotKeyRef?
             let id = EventHotKeyID(signature: Self.signature, id: UInt32(number))
-            let status = RegisterEventHotKey(UInt32(Self.digitKeyCodes[number - 1]), UInt32(controlKey | optionKey),
+            let status = RegisterEventHotKey(UInt32(Self.digitKeyCodes[number - 1]), UInt32(optionKey),
                                              id, GetApplicationEventTarget(), 0, &ref)
             if status == noErr, let ref {
                 hotKeys.append(ref)
             } else {
-                NSLog("SpaceName: ⌃⌥\(number) is taken by another app (error \(status))")
+                NSLog("SpaceName: ⌥\(number) is taken by another app (error \(status))")
             }
         }
     }
 
-    /// Mission Control ignores shortcuts posted while the user still holds ⌃⌥,
+    /// Mission Control ignores shortcuts posted while the user still holds ⌥,
     /// so wait (up to a second) for the keys to be released.
     static func afterModifiersReleased(_ action: @escaping () -> Void) {
         let held: CGEventFlags = [.maskControl, .maskAlternate, .maskShift, .maskCommand]

@@ -79,7 +79,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     #endif
 
-    /// ⌃⌥N: switch to desktop N on the menu bar display. If switching can't
+    /// ⌥N: switch to desktop N on the menu bar display. If switching can't
     /// happen (permission, shortcuts), open the panel so its banner explains why.
     private func switchToDesktop(_ number: Int) {
         model.refresh()
