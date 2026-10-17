@@ -31,6 +31,9 @@ final class MissionControlOverlay {
     private var loggedMismatch = false
     private var lastFrames: [CGRect] = []
     private var lastMovedAt = Date.distantPast
+    /// After a click or key press, stay hidden through Mission Control's closing animation.
+    private var hiddenUntil = Date.distantPast
+    private static let closeAnimationAllowance: TimeInterval = 0.8
 
     init(store: SpaceStore) {
         self.store = store
@@ -46,6 +49,24 @@ final class MissionControlOverlay {
             reason: "Watch for Mission Control to show Space names")
         ProcessInfo.processInfo.disableAutomaticTermination("Menu bar app")
         schedule(interval: Self.idleInterval)
+
+        // A click or key press in Mission Control usually closes it, but the Dock keeps
+        // reporting the old label positions until its closing animation ends. Hide right
+        // away; if Mission Control stays open, the tags fade back in once things settle.
+        NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .keyDown]) { [weak self] _ in
+            self?.hideUntilSettled()
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.hideUntilSettled()
+        }
+    }
+
+    private func hideUntilSettled() {
+        guard isTracking else { return }
+        hiddenUntil = Date().addingTimeInterval(Self.closeAnimationAllowance)
+        hideAll()
     }
 
     // MARK: Polling
@@ -111,7 +132,7 @@ final class MissionControlOverlay {
             lastFrames = frames
             lastMovedAt = Date()
         }
-        if Date().timeIntervalSince(lastMovedAt) < Self.settleDelay {
+        if Date().timeIntervalSince(lastMovedAt) < Self.settleDelay || Date() < hiddenUntil {
             hideAll()
             return
         }
