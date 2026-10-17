@@ -25,6 +25,7 @@ else
     cp "$(swift build -c "$CONFIG" --show-bin-path)/SpaceName" "$APP/Contents/MacOS/SpaceName"
 fi
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 # Signing identity: $SIGN_IDENTITY, else a "SpaceName Dev" certificate if one exists,
 # else ad-hoc. An ad-hoc signature changes on every rebuild, which makes macOS forget

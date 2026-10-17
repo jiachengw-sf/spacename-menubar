@@ -30,9 +30,9 @@
 </p>
 
 > [!WARNING]
-> **Unsigned build.** SpaceName isn't signed with an Apple Developer ID or
-> notarized, so macOS blocks the first launch. Right-click the app and choose
-> **Open**, or allow it under *System Settings › Privacy & Security*.
+> **First launch needs one extra step.** SpaceName isn't notarized by Apple, so
+> macOS can't verify the developer and blocks the first launch. See
+> [Opening it the first time](#opening-it-the-first-time).
 
 ## 🪟 What is this?
 
@@ -74,13 +74,26 @@ To try it: SpaceName menu › *SpaceName Settings…* › **Show Names in Missio
 
 ## ⬇️ Install
 
-1. Download `SpaceName-<version>.zip` from
-   [Releases](https://github.com/jiachengw-sf/spacename-menubar/releases/latest),
-   unzip it, and move `SpaceName.app` to `/Applications`.
-2. Open it. The first time, right-click it and choose **Open** (see the warning above).
-3. To switch desktops by clicking, allow SpaceName under
+1. Download `SpaceName-<version>.dmg` from
+   [Releases](https://github.com/jiachengw-sf/spacename-menubar/releases/latest)
+   (a `.zip` is there too if you prefer).
+2. Open the `.dmg` and drag **SpaceName** onto the **Applications** shortcut.
+3. Open SpaceName from Applications (see [Opening it the first time](#opening-it-the-first-time)).
+   It appears in the menu bar, not the Dock.
+4. To switch desktops by clicking, allow SpaceName under
    *System Settings › Privacy & Security › Accessibility* when asked.
-4. Recommended: turn on macOS's desktop shortcuts (see [Switching setup](#switching-setup)).
+5. Recommended: turn on macOS's desktop shortcuts (see [Switching setup](#switching-setup)).
+
+### Opening it the first time
+
+macOS warns that it can't verify the developer, because notarization requires a
+paid Apple Developer account. You only need to do this once.
+
+- **macOS 15 Sequoia and later:** open SpaceName, click **Done** on the warning,
+  then go to *System Settings › Privacy & Security*, scroll down, click
+  **Open Anyway** next to SpaceName, and confirm with your password.
+- **macOS 14 Sonoma:** right-click (or Control-click) SpaceName in Applications,
+  choose **Open**, then click **Open** in the dialog.
 
 ## 📋 Requirements
 
@@ -104,6 +117,7 @@ Full Xcode isn't required.
 ```bash
 scripts/build_app.sh            # release build (universal) → build/SpaceName.app
 scripts/build_app.sh debug      # faster debug build for this Mac only
+scripts/make_dmg.sh             # package build/SpaceName.app as a .dmg
 open build/SpaceName.app
 ```
 
@@ -201,6 +215,8 @@ goes through the Dock and stays consistent.
 Package.swift                 SwiftPM manifest
 Resources/Info.plist          Bundle metadata (LSUIElement)
 scripts/build_app.sh          Build (universal for release), bundle, sign
+scripts/make_dmg.sh           Package the app as a drag-to-Applications .dmg
+Resources/AppIcon.icns        App icon
 docs/                         README images
 Sources/SpaceName/
   SpaceProvider.swift         Private CGS calls (only file using private API)
