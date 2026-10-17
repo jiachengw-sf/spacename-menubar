@@ -10,7 +10,7 @@ struct StyleEditor: View {
     /// nil is "Auto": the system color, which follows the menu bar appearance.
     private static let swatches: [NSColor?] = [
         nil,
-        NSColor(Theme.accent),
+        NSColor(srgbRed: 1.0, green: 0.36, blue: 0.66, alpha: 1),
         .systemRed,
         .systemOrange,
         .systemYellow,
@@ -46,11 +46,11 @@ struct StyleEditor: View {
                 Label("Hard to read on a \(poor.joined(separator: " or ")) menu bar",
                       systemImage: "exclamationmark.triangle.fill")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(.orange)
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.05)))
         .onAppear {
             // Keep the color panel above the dropdown.
             NSColorPanel.shared.level = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
@@ -74,7 +74,7 @@ struct StyleEditor: View {
             }
             .frame(width: 16, height: 16)
             .padding(2)
-            .overlay(Circle().strokeBorder(.white.opacity(selected ? 0.9 : 0.15), lineWidth: selected ? 1.5 : 1))
+            .overlay(Circle().strokeBorder(Color.primary.opacity(selected ? 0.8 : 0.15), lineWidth: selected ? 1.5 : 1))
         }
         .buttonStyle(.plain)
         .help(color == nil ? "Auto (system color)" : "")
@@ -91,10 +91,10 @@ struct StyleEditor: View {
         Button { isOn.wrappedValue.toggle() } label: {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(isOn.wrappedValue ? .white : .white.opacity(0.6))
+                .foregroundStyle(isOn.wrappedValue ? Color.white : Color.secondary)
                 .frame(width: 24, height: 22)
                 .background(RoundedRectangle(cornerRadius: 6)
-                    .fill(isOn.wrappedValue ? Theme.accent : .white.opacity(0.08)))
+                    .fill(isOn.wrappedValue ? Theme.accent : Color.primary.opacity(0.08)))
         }
         .buttonStyle(.plain)
         .help(help)

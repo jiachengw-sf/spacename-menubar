@@ -9,7 +9,8 @@ private final class DropdownPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// Shows the Space list under the status item, with a dark blurred background.
+/// Shows the Space list under the status item, styled like the system's own
+/// menu bar panels (Wi-Fi, Control Center): glass on macOS 26, frosted before that.
 final class PanelController {
     static let width: CGFloat = 300
     static let cornerRadius: CGFloat = 18
@@ -38,25 +39,10 @@ final class PanelController {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .transient]
-        panel.appearance = NSAppearance(named: .darkAqua)
-
-        let blur = NSVisualEffectView()
-        blur.material = .hudWindow
-        blur.blendingMode = .behindWindow
-        blur.state = .active
-        blur.maskImage = Self.roundedMask(radius: Self.cornerRadius)
 
         hostingView = NSHostingView(rootView: PanelView(model: model, store: model.store, switcher: switcher,
                                                         onSwitch: { _ in }, onOpenSettingsURL: { _ in }))
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
-        blur.addSubview(hostingView)
-        NSLayoutConstraint.activate([
-            hostingView.leadingAnchor.constraint(equalTo: blur.leadingAnchor),
-            hostingView.trailingAnchor.constraint(equalTo: blur.trailingAnchor),
-            hostingView.topAnchor.constraint(equalTo: blur.topAnchor),
-            hostingView.bottomAnchor.constraint(equalTo: blur.bottomAnchor),
-        ])
-        panel.contentView = blur
+        panel.contentView = Self.makeBackground(containing: hostingView)
         hostingView.rootView = PanelView(
             model: model, store: model.store, switcher: switcher,
             onSwitch: { [weak self] space in self?.switchTo(space) },
@@ -133,6 +119,31 @@ final class PanelController {
             if self.model.editingID != nil { self.model.cancelEditing() } else { self.close() }
             return nil
         }) { monitors.append(m) }
+    }
+
+    /// Glass on macOS 26 (matches Wi-Fi / Control Center); the popover material before.
+    /// Both follow the system's light or dark appearance.
+    private static func makeBackground(containing content: NSView) -> NSView {
+        if #available(macOS 26.0, *) {
+            let glass = NSGlassEffectView()
+            glass.cornerRadius = cornerRadius
+            glass.contentView = content
+            return glass
+        }
+        let blur = NSVisualEffectView()
+        blur.material = .popover
+        blur.blendingMode = .behindWindow
+        blur.state = .active
+        blur.maskImage = roundedMask(radius: cornerRadius)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        blur.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.leadingAnchor.constraint(equalTo: blur.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: blur.trailingAnchor),
+            content.topAnchor.constraint(equalTo: blur.topAnchor),
+            content.bottomAnchor.constraint(equalTo: blur.bottomAnchor),
+        ])
+        return blur
     }
 
     private static func roundedMask(radius: CGFloat) -> NSImage {

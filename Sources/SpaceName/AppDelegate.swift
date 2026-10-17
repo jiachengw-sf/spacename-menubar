@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController!
     private var panel: PanelController!
     private var missionControlOverlay: MissionControlOverlay!
+    private var hotkeys: DesktopHotkeys!
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -15,6 +16,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         missionControlOverlay = MissionControlOverlay(store: model.store)
         missionControlOverlay.start()
 
+        hotkeys = DesktopHotkeys { [weak self] number in self?.switchToDesktop(number) }
+        hotkeys.update()
+        NotificationCenter.default.addObserver(forName: DesktopHotkeys.didChangeNotification, object: nil,
+                                               queue: .main) { [weak self] _ in self?.hotkeys.update() }
+
         // Re-render the label whenever the current Space or its customization changes.
         model.$snapshot.combineLatest(model.store.$entries)
             .receive(on: DispatchQueue.main)
@@ -22,10 +28,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 let store = self.model.store
                 guard let current = snapshot.current else {
-                    self.statusItem.update(title: "Desktop ?", style: .plain)
+                    self.statusItem.update(title: "Desktop ?", style: .plain, space: nil)
                     return
                 }
-                self.statusItem.update(title: store.displayName(for: current), style: store.style(for: current))
+                self.statusItem.update(title: store.displayName(for: current), style: store.style(for: current), space: current)
             }
             .store(in: &cancellables)
 
@@ -72,6 +78,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     #endif
+
+    /// ⌃⌥N: switch to desktop N on the menu bar display. If switching can't
+    /// happen (permission, shortcuts), open the panel so its banner explains why.
+    private func switchToDesktop(_ number: Int) {
+        model.refresh()
+        let snapshot = model.snapshot
+        guard let target = snapshot.spaces.first(where: { $0.desktopNumber == number }) else {
+            NSSound.beep()
+            return
+        }
+        DesktopHotkeys.afterModifiersReleased { [weak self] in
+            guard let self else { return }
+            let started = self.switcher.switchTo(target, in: snapshot,
+                                                 displayName: self.model.store.displayName(for: target))
+            if !started, let button = self.statusItem.button {
+                self.panel.show(below: button)
+            }
+        }
+    }
 
     @objc private func togglePanel() {
         guard let button = statusItem.button else { return }

@@ -1,94 +1,87 @@
 import SwiftUI
 
-/// A Space row: numbered badge, name (click to rename), and the switch arrow.
+/// A Space row in the style of the Wi-Fi menu's network rows: a round icon
+/// (numbered, accent-filled for the current Space), the name, and the row's
+/// shortcut. Clicking the row switches; hovering reveals a rename button.
 struct SpaceRowView: View {
     @ObservedObject var model: AppModel
     let space: Space
     let name: String
     let isCurrent: Bool
     let canRename: Bool
+    let shortcut: String?
     let onSwitch: (Space) -> Void
 
     @State private var isHovering = false
-    @State private var isHoveringArrow = false
 
     private var isEditing: Bool { model.editingID == space.id }
 
     var body: some View {
         VStack(spacing: 6) {
-            mainRow
             if isEditing {
+                HStack(spacing: 10) {
+                    SpaceBadge(space: space, isCurrent: isCurrent)
+                    RenameField(model: model, placeholder: space.defaultName)
+                }
+                .padding(.horizontal, 8)
+                .frame(height: Theme.rowHeight)
                 StyleEditor(model: model, placeholder: space.defaultName)
+                    .padding(.horizontal, 2)
+                    .padding(.bottom, 4)
+            } else {
+                row
             }
         }
     }
 
-    private var mainRow: some View {
+    private var row: some View {
         HStack(spacing: 10) {
             SpaceBadge(space: space, isCurrent: isCurrent)
-            if isEditing {
-                RenameField(model: model, placeholder: space.defaultName)
-            } else {
-                label
-                switchButton
-            }
-        }
-        .padding(.horizontal, 6)
-        .frame(height: Theme.rowHeight)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.rowHeight / 2)
-                .fill(.white.opacity(isEditing ? 0.06 : (isHovering ? 0.07 : 0)))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.rowHeight / 2)
-                .strokeBorder(.white.opacity(isEditing ? 0.55 : 0), lineWidth: 1.5)
-        )
-        .onHover { isHovering = $0 }
-    }
-
-    private var label: some View {
-        HStack(spacing: 6) {
             Text(name)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white)
+                .font(.system(size: 13))
                 .lineLimit(1)
                 .truncationMode(.tail)
-            if space.isFullscreen {
-                Text("Full Screen")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.45))
-            }
+            Spacer(minLength: 6)
+            trailing
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 8)
+        .frame(height: Theme.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(isHovering ? 0.08 : 0)))
         .contentShape(Rectangle())
-        .onTapGesture { if canRename { model.beginEditing(space) } }
-        .help(canRename ? "Click to rename" : "Full-screen Spaces can't be renamed")
+        .onHover { isHovering = $0 }
+        .onTapGesture { if !isCurrent { onSwitch(space) } }
+        .help(isCurrent ? "You're on this Space" : "Switch to \(name)")
     }
 
-    private var switchButton: some View {
-        Button { onSwitch(space) } label: {
-            Image(systemName: "arrow.up.right")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white.opacity(isCurrent ? 0.25 : 0.9))
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(.white.opacity(isHoveringArrow && !isCurrent ? 0.12 : 0)))
-                .contentShape(Circle())
+    @ViewBuilder
+    private var trailing: some View {
+        if isHovering && canRename {
+            Button { model.beginEditing(space) } label: {
+                Image(systemName: "pencil")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Rename and style")
+        } else if let shortcut {
+            Text(shortcut)
+                .font(.system(size: 13))
+                .foregroundStyle(.tertiary)
         }
-        .buttonStyle(.plain)
-        .disabled(isCurrent)
-        .onHover { isHoveringArrow = $0 }
-        .help(isCurrent ? "You're on this Space" : "Switch to this Space")
     }
 }
 
-/// Numbered circle; the current Space gets an outer ring.
+/// Round icon with the desktop number; filled with the accent color for the
+/// current Space, like the connected network in the Wi-Fi menu.
 struct SpaceBadge: View {
     let space: Space
     let isCurrent: Bool
 
     var body: some View {
         ZStack {
-            Circle().fill(.white.opacity(0.12))
+            Circle().fill(isCurrent ? Theme.accent : Color.primary.opacity(0.1))
             if let number = space.desktopNumber {
                 Text("\(number)")
                     .font(.system(size: 12, weight: .semibold))
@@ -97,14 +90,12 @@ struct SpaceBadge: View {
                     .font(.system(size: 10, weight: .semibold))
             }
         }
-        .foregroundStyle(.white.opacity(0.85))
-        .frame(width: 24, height: 24)
-        .padding(3)
-        .overlay(Circle().strokeBorder(.white.opacity(isCurrent ? 0.85 : 0), lineWidth: 1.5))
+        .foregroundStyle(isCurrent ? Color.white : Color.primary)
+        .frame(width: 26, height: 26)
     }
 }
 
-/// Pink-bordered text field with cancel (X) and confirm (✓) buttons.
+/// Accent-bordered text field with cancel (X) and confirm (✓) buttons.
 /// Enter confirms; Escape is handled by PanelController and cancels.
 struct RenameField: View {
     @ObservedObject var model: AppModel
@@ -114,22 +105,21 @@ struct RenameField: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            TextField("", text: $model.draft, prompt: Text(placeholder).foregroundColor(.white.opacity(0.35)))
+            TextField("", text: $model.draft, prompt: Text(placeholder))
                 .textFieldStyle(.plain)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white)
+                .font(.system(size: 13))
                 .focused($focused)
                 .onSubmit { model.commitEditing() }
                 .padding(.horizontal, 8)
-                .frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 8).fill(.black.opacity(0.3)))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.accent, lineWidth: 1.5))
+                .frame(height: 26)
+                .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.06)))
+                .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Theme.accent, lineWidth: 1.5))
 
             Button { model.cancelEditing() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .frame(width: 26, height: 26)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, height: 24)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -137,10 +127,10 @@ struct RenameField: View {
 
             Button { model.commitEditing() } label: {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 26, height: 26)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(Theme.accent))
+                    .frame(width: 24, height: 24)
+                    .background(Circle().fill(Theme.accent))
             }
             .buttonStyle(.plain)
             .help("Save (Return)")

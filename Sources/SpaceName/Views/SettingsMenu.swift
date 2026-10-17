@@ -1,6 +1,6 @@
 import AppKit
 
-/// The gear button's menu: launch at login, Mission Control names, setup shortcuts, quit.
+/// The Settings menu: launch at login, desktop shortcuts, Mission Control names, setup links, quit.
 final class SettingsMenu: NSObject {
     private let onOpenSettingsURL: (URL) -> Void
 
@@ -22,6 +22,10 @@ final class SettingsMenu: NSObject {
                          #selector(toggleLaunchAtLogin))
         login.state = LoginItem.isEnabled || LoginItem.needsApproval ? .on : .off
         menu.addItem(login)
+
+        let shortcuts = item("Desktop Shortcuts (⌃⌥1–9)", #selector(toggleDesktopShortcuts))
+        shortcuts.state = DesktopHotkeys.isEnabled ? .on : .off
+        menu.addItem(shortcuts)
 
         let overlay = item("Show Names in Mission Control", #selector(toggleMissionControlNames))
         overlay.state = MissionControlOverlay.isEnabled ? .on : .off
@@ -45,6 +49,10 @@ final class SettingsMenu: NSObject {
 
     @objc private func toggleLaunchAtLogin() {
         LoginItem.setEnabled(!(LoginItem.isEnabled || LoginItem.needsApproval))
+    }
+
+    @objc private func toggleDesktopShortcuts() {
+        DesktopHotkeys.isEnabled.toggle()
     }
 
     @objc private func toggleMissionControlNames() {

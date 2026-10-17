@@ -2,11 +2,13 @@ import AppKit
 import SwiftUI
 
 enum Theme {
-    static let accent = Color(red: 1.0, green: 0.36, blue: 0.66)
-    static let rowHeight: CGFloat = 44
+    /// The user's system accent color, like the system's own menus.
+    static let accent = Color.accentColor
+    static let rowHeight: CGFloat = 36
 }
 
-/// The dropdown's content: one row per Space plus a small footer.
+/// The dropdown's content, laid out like the system's Wi-Fi menu: a title,
+/// sections with secondary headers, hoverable rows, and settings at the bottom.
 struct PanelView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var store: SpaceStore
@@ -14,108 +16,150 @@ struct PanelView: View {
     let onSwitch: (Space) -> Void
     let onOpenSettingsURL: (URL) -> Void
 
+    private var desktops: [Space] { model.snapshot.spaces.filter { !$0.isFullscreen } }
+    private var fullscreen: [Space] { model.snapshot.spaces.filter(\.isFullscreen) }
+
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Spaces")
+                .font(.system(size: 13, weight: .bold))
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
             if let problem = switcher.problem {
                 SetupBanner(problem: problem, switcher: switcher, onOpenSettingsURL: onOpenSettingsURL)
-                    .padding(.bottom, 4)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
             }
-            ForEach(model.snapshot.spaces) { space in
+
+            MenuSeparator()
+            SectionHeader("Desktops")
+            rows(desktops)
+
+            if !fullscreen.isEmpty {
+                MenuSeparator()
+                SectionHeader("Full Screen")
+                rows(fullscreen)
+            }
+
+            MenuSeparator()
+            if missingDirectShortcuts {
+                MenuActionRow(title: "Turn On Faster Switching…",
+                              help: "In Keyboard Shortcuts › Mission Control, turn on \"Switch to Desktop N\". "
+                                + "Until then, SpaceName steps through Spaces with Control-arrow keys.") {
+                    onOpenSettingsURL(SpaceSwitcher.keyboardSettingsURL)
+                }
+            }
+            MenuActionRow(title: "SpaceName Settings…") {
+                SettingsMenu.show(onOpenSettingsURL: onOpenSettingsURL)
+            }
+        }
+        .padding(.bottom, 6)
+        .frame(width: PanelController.width)
+    }
+
+    private func rows(_ spaces: [Space]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(spaces) { space in
                 SpaceRowView(model: model,
                              space: space,
                              name: store.displayName(for: space),
                              isCurrent: space.id == model.snapshot.currentID,
                              canRename: store.canCustomize(space),
+                             shortcut: DesktopHotkeys.label(forDesktop: space.desktopNumber),
                              onSwitch: onSwitch)
             }
-            footer
         }
-        .padding(8)
-        .frame(width: PanelController.width)
-        .overlay(
-            RoundedRectangle(cornerRadius: PanelController.cornerRadius)
-                .strokeBorder(.white.opacity(0.12), lineWidth: 1)
-        )
-        .environment(\.colorScheme, .dark)
+        .padding(.horizontal, 6)
     }
 
     /// Some desktop can only be reached by stepping with Control-arrow.
     private var missingDirectShortcuts: Bool {
-        model.snapshot.spaces.contains { !$0.isFullscreen && switcher.lacksDirectShortcut($0) }
-    }
-
-    private var footer: some View {
-        HStack {
-            if missingDirectShortcuts {
-                Button("Turn on direct switching…") {
-                    onOpenSettingsURL(SpaceSwitcher.keyboardSettingsURL)
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Theme.accent)
-                .help("""
-                    In Keyboard Shortcuts › Mission Control, turn on "Switch to Desktop N" \
-                    for each desktop. Until then, SpaceName steps through Spaces with Control-arrow keys.
-                    """)
-            } else {
-                Text("Click a name to rename")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
-            }
-            Spacer()
-            Button {
-                SettingsMenu.show(onOpenSettingsURL: onOpenSettingsURL)
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help("Settings")
-        }
-        .padding(.horizontal, 10)
-        .padding(.top, 2)
+        desktops.contains { switcher.lacksDirectShortcut($0) }
     }
 }
 
-/// Explains why a switch didn't happen and links to the setting that fixes it.
+// MARK: - Menu building blocks
+
+struct SectionHeader: View {
+    let title: String
+    init(_ title: String) { self.title = title }
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 14)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
+    }
+}
+
+struct MenuSeparator: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.1))
+            .frame(height: 1)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 4)
+    }
+}
+
+/// A plain text row like "Wi-Fi Settings…", highlighted on hover.
+struct MenuActionRow: View {
+    let title: String
+    var help: String? = nil
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 13))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+            .frame(height: 28)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(isHovering ? 0.08 : 0)))
+            .contentShape(Rectangle())
+            .onHover { isHovering = $0 }
+            .onTapGesture(perform: action)
+            .help(help ?? "")
+            .padding(.horizontal, 6)
+    }
+}
+
+// MARK: - Setup banner
+
+/// Explains why switching or Mission Control names aren't working and links to the fix.
 struct SetupBanner: View {
     let problem: SpaceSwitcher.Problem
     let switcher: SpaceSwitcher
     let onOpenSettingsURL: (URL) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(.orange)
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
             }
             Text(message)
                 .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
                 Button("Dismiss") { switcher.problem = nil }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .controlSize(.small)
                 Button(buttonTitle, action: fix)
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Theme.accent))
+                    .controlSize(.small)
+                    .buttonStyle(.borderedProminent)
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.07)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
     }
 
     private var title: String {
@@ -130,7 +174,7 @@ struct SetupBanner: View {
         case .needsPermission:
             return "Switching Spaces and showing your names in Mission Control need Accessibility "
                 + "permission. Allow it in System Settings › Privacy & Security › Accessibility. If SpaceName is "
-                + "already listed and on, remove it (−) and add it again; a rebuilt app needs a fresh grant."
+                + "already listed and on, remove it (−) and add it again."
         case .noShortcut:
             return "Turn on \"Switch to Desktop N\" (or \"Move left/right a space\") in "
                 + "System Settings › Keyboard › Keyboard Shortcuts… › Mission Control."
