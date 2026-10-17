@@ -74,6 +74,8 @@ final class PanelController {
         anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
         layout()
         panel.makeKeyAndOrderFront(nil)
+        // Recompute once the rounded content has actually drawn on screen.
+        DispatchQueue.main.async { [weak self] in self?.panel.invalidateShadow() }
         installMonitors()
     }
 
@@ -105,6 +107,10 @@ final class PanelController {
         x = min(max(x, visible.minX + 8), visible.maxX - size.width - 8)
         let y = anchor.minY - 6 - size.height
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+        // The shadow is computed from what's drawn; recompute it for the new size so
+        // it follows the rounded corners instead of the old rectangular frame.
+        panel.displayIfNeeded()
+        panel.invalidateShadow()
     }
 
     private func installMonitors() {
@@ -128,13 +134,17 @@ final class PanelController {
             let glass = NSGlassEffectView()
             glass.cornerRadius = cornerRadius
             glass.contentView = content
-            return glass
+            return clipped(glass)
         }
         let blur = NSVisualEffectView()
         blur.material = .popover
         blur.blendingMode = .behindWindow
         blur.state = .active
         blur.maskImage = roundedMask(radius: cornerRadius)
+        blur.wantsLayer = true
+        blur.layer?.cornerRadius = cornerRadius
+        blur.layer?.cornerCurve = .continuous
+        blur.layer?.masksToBounds = true
         content.translatesAutoresizingMaskIntoConstraints = false
         blur.addSubview(content)
         NSLayoutConstraint.activate([
@@ -144,6 +154,25 @@ final class PanelController {
             content.bottomAnchor.constraint(equalTo: blur.bottomAnchor),
         ])
         return blur
+    }
+
+    /// Wraps `view` in a container clipped to the panel's rounded corners, so nothing
+    /// (including the window shadow) shows a square edge at the corners.
+    private static func clipped(_ view: NSView) -> NSView {
+        let container = NSView()
+        container.wantsLayer = true
+        container.layer?.cornerRadius = cornerRadius
+        container.layer?.cornerCurve = .continuous
+        container.layer?.masksToBounds = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            view.topAnchor.constraint(equalTo: container.topAnchor),
+            view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+        return container
     }
 
     private static func roundedMask(radius: CGFloat) -> NSImage {
