@@ -32,8 +32,10 @@
 > **Open**, or allow it under *System Settings › Privacy & Security*.
 
 > [!NOTE]
-> **Early release.** Renaming and styling are tested. Switching Spaces and names
-> in Mission Control are new and haven't been tested end to end yet.
+> **Mission Control names are experimental.** They follow the "Desktop N" labels
+> when you hover the top bar, but can lag during Mission Control's animations and
+> don't appear on the collapsed bar. Turn them off in *SpaceName Settings…* if
+> they bother you.
 
 ## 🪟 What is this?
 
@@ -49,12 +51,17 @@ Control too.
 
 ## ✨ Features
 
-- **Menu bar label:** the current desktop's name, in its own color and bold/italic style.
-- **One-click rename:** click a name in the dropdown and type. Return saves, Esc cancels.
+- **Menu bar label:** the desktop number in a circle plus its name, in its own color
+  and bold/italic style.
+- **Native-looking dropdown:** styled like the Wi-Fi menu (Liquid Glass on macOS 26),
+  in light or dark mode. Click a desktop to switch to it.
+- **Keyboard shortcuts:** ⌥1 – ⌥9 jump to desktops 1–9. While they're on, Option-number
+  no longer types its special character (™, •, …); turn them off in Settings if you need those.
+- **Quick rename:** hover a desktop, click the pencil, and type. Return saves, Esc cancels.
 - **Colors and styles:** presets or any custom color, with a light and dark menu bar
   preview and a warning when a color is hard to read.
-- **Switch from the list:** the ↗ button jumps to that desktop.
-- **Names in Mission Control:** your names cover the "Desktop N" labels (F3).
+- **Names in Mission Control (experimental):** your names cover the "Desktop N"
+  labels when you hover the top bar in Mission Control (F3).
 - **Launch at login**, no Dock icon, and names that stay attached to the right
   desktop even when you reorder, add or remove them.
 
@@ -66,8 +73,8 @@ Requires macOS 14 or later.
    [Releases](https://github.com/jiachengw-sf/SpaceName/releases/latest), unzip it,
    and move `SpaceName.app` to `/Applications`.
 2. Open it (see the warning above for the first launch).
-3. To use the ↗ switch button and names in Mission Control, allow SpaceName
-   under *Privacy & Security › Accessibility* when asked.
+3. To switch desktops (clicking a row or ⌥1–9) and to show names in Mission
+   Control, allow SpaceName under *Privacy & Security › Accessibility* when asked.
 
 ## 🛠 Build from source
 
@@ -79,7 +86,7 @@ scripts/build_app.sh debug      # debug build
 open build/SpaceName.app
 ```
 
-To quit: gear button › Quit SpaceName, or `pkill -x SpaceName`.
+To quit: *SpaceName Settings…* › Quit SpaceName, or `pkill -x SpaceName`.
 
 ### Signing and the Accessibility permission
 
@@ -99,7 +106,7 @@ macOS ties that permission to the app's code signature.
 
 ### Switching setup
 
-The ↗ button presses your Mission Control shortcuts, using the key bindings
+Switching (clicking a row or pressing ⌥1–9) presses your Mission Control shortcuts, using the key bindings
 actually configured in *System Settings › Keyboard › Keyboard Shortcuts… ›
 Mission Control*:
 
@@ -126,7 +133,7 @@ name tag over each renamed Space's label (see
 through the Dock's accessibility tree, so it needs the same Accessibility
 permission as switching. While Mission Control is closed it checks for it four
 times a second; while open it follows the labels 30 times a second so tags
-keep up when the bar expands on hover. Turn it off in the gear menu.
+keep up when the bar expands on hover. Turn it off in *SpaceName Settings…*.
 
 ## 💾 Data
 
@@ -189,6 +196,7 @@ Sources/SpaceName/
   SpaceStore.swift            JSON persistence keyed by UUID
   LabelStyle.swift            Fonts, colors, contrast check
   SpaceSwitcher.swift         Shortcut lookup and CGEvent posting
+  DesktopHotkeys.swift        ⌥1–9 global shortcuts
   DockMissionControl.swift    Reads Mission Control's Spaces bar (Dock internals)
   MissionControlOverlay.swift Name tags drawn over Mission Control
   LoginItem.swift             SMAppService wrapper
