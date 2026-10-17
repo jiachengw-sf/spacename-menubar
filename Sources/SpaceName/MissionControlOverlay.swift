@@ -19,12 +19,18 @@ final class MissionControlOverlay {
 
     private static let idleInterval: TimeInterval = 0.25
     private static let trackingInterval: TimeInterval = 1.0 / 30
+    /// Mission Control animates the bar when it opens and when it expands on hover.
+    /// Tags stay hidden until positions have been still this long, then fade in,
+    /// instead of chasing the animation.
+    private static let settleDelay: TimeInterval = 0.3
 
     private let store: SpaceStore
     private var timer: Timer?
     private var windows: [CGDirectDisplayID: OverlayWindow] = [:]
     private var isTracking = false
     private var loggedMismatch = false
+    private var lastFrames: [CGRect] = []
+    private var lastMovedAt = Date.distantPast
 
     init(store: SpaceStore) {
         self.store = store
@@ -54,6 +60,7 @@ final class MissionControlOverlay {
         guard Self.isEnabled, DockMissionControl.hasPermission, let bars = DockMissionControl.read() else {
             if isTracking {
                 isTracking = false
+                lastFrames = []
                 hideAll()
                 schedule(interval: Self.idleInterval)
             }
@@ -96,6 +103,17 @@ final class MissionControlOverlay {
                                      style: entry.style)
                 tagsByScreen[screen.displayID, default: []].append(tag)
             }
+        }
+
+        // Hide while anything is moving; show once it has settled.
+        let frames = tagsByScreen.keys.sorted().flatMap { tagsByScreen[$0]!.map(\.frame) }
+        if frames != lastFrames {
+            lastFrames = frames
+            lastMovedAt = Date()
+        }
+        if Date().timeIntervalSince(lastMovedAt) < Self.settleDelay {
+            hideAll()
+            return
         }
 
         for (displayID, window) in windows where tagsByScreen[displayID] == nil {
@@ -171,7 +189,14 @@ private final class OverlayWindow: NSPanel {
     func show(tags: [OverlayTag], on screen: NSScreen) {
         if frame != screen.frame { setFrame(screen.frame, display: false) }
         if host.rootView.tags != tags { host.rootView = OverlayView(tags: tags) }
-        if !isVisible { orderFrontRegardless() }
+        if !isVisible {
+            alphaValue = 0
+            orderFrontRegardless()
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.15
+                animator().alphaValue = 1
+            }
+        }
     }
 }
 
