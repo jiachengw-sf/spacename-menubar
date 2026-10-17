@@ -1,32 +1,75 @@
-# SpaceName
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="SpaceName icon">
+</p>
 
-A macOS menu bar app that shows which Mission Control Space you're on, with a
-custom name, color, and bold/italic style per Space.
+<h1 align="center">SpaceName</h1>
 
-- Click the menu bar item for a dropdown listing every Space on the display that
-  has the menu bar.
-- Click a name to rename it inline (Return saves, Esc cancels). While editing,
-  pick a color and bold/italic, with a live light/dark menu bar preview and a
-  warning when the color is hard to read.
-- Click ↗ to switch to that Space.
-- Mission Control (F3) shows your names and styles in place of "Desktop N".
-- Gear button: Launch at Login, Show Names in Mission Control, shortcut and
-  permission settings, Quit.
+<p align="center">
+  <b>Give your Mac's desktops real names.</b><br>
+  "Desktop 4" becomes "Homework", in the menu bar and in Mission Control,<br>
+  in the color and style you pick.
+</p>
 
-Requires macOS 14+. No Dock icon (`LSUIElement`).
+<p align="center">
+  <a href="https://github.com/jiachengw-sf/SpaceName/releases/latest"><b>⬇ Download</b></a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-build-from-source">Build from source</a> ·
+  <a href="#-private-apis">How it works</a>
+</p>
 
-## Install a release
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/jiachengw-sf/SpaceName?label=release&color=ff5ca8" alt="Latest release">
+  <img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-0A84FF" alt="SwiftUI and AppKit">
+</p>
+
+---
+
+> [!WARNING]
+> **Unsigned build.** SpaceName isn't signed with an Apple Developer ID or
+> notarized, so macOS blocks the first launch. Right-click the app and choose
+> **Open**, or allow it under *System Settings › Privacy & Security*.
+
+> [!NOTE]
+> **Early release.** Renaming and styling are tested. Switching Spaces and names
+> in Mission Control are new and haven't been tested end to end yet.
+
+## 🪟 What is this?
+
+You have eight desktops: one for school, one for a side project, one for music.
+macOS calls them all "Desktop 1" through "Desktop 8", so you swipe around
+guessing. SpaceName puts the real name of the desktop you're on in the menu bar,
+lets you rename any of them in one click, and shows those names in Mission
+Control too.
+
+<p align="center">
+  <img src="docs/mission-control-overlay-mockup.png" width="720" alt="Mission Control before and after SpaceName: Desktop 4 and 5 shown as Boring and Homework Desktop">
+</p>
+
+## ✨ Features
+
+- **Menu bar label:** the current desktop's name, in its own color and bold/italic style.
+- **One-click rename:** click a name in the dropdown and type. Return saves, Esc cancels.
+- **Colors and styles:** presets or any custom color, with a light and dark menu bar
+  preview and a warning when a color is hard to read.
+- **Switch from the list:** the ↗ button jumps to that desktop.
+- **Names in Mission Control:** your names cover the "Desktop N" labels (F3).
+- **Launch at login**, no Dock icon, and names that stay attached to the right
+  desktop even when you reorder, add or remove them.
+
+Requires macOS 14 or later.
+
+## ⬇️ Install
 
 1. Download `SpaceName-<version>.zip` from
-   [Releases](https://github.com/jiachengw-sf/SpaceName/releases), unzip it, and
-   move `SpaceName.app` to `/Applications`.
-2. The app isn't signed with an Apple Developer ID or notarized, so macOS blocks
-   the first launch. Right-click the app and choose **Open**, or allow it under
-   *System Settings › Privacy & Security* after a blocked launch.
+   [Releases](https://github.com/jiachengw-sf/SpaceName/releases/latest), unzip it,
+   and move `SpaceName.app` to `/Applications`.
+2. Open it (see the warning above for the first launch).
 3. To use the ↗ switch button and names in Mission Control, allow SpaceName
    under *Privacy & Security › Accessibility* when asked.
 
-## Build and run
+## 🛠 Build from source
 
 Only the Xcode Command Line Tools are needed.
 
@@ -85,7 +128,7 @@ permission as switching. While Mission Control is closed it checks for it four
 times a second; while open it follows the labels 30 times a second so tags
 keep up when the bar expands on hover. Turn it off in the gear menu.
 
-## Data
+## 💾 Data
 
 Names and styles are stored in
 `~/Library/Application Support/SpaceName/spaces.json`, keyed by each Space's
@@ -93,7 +136,7 @@ UUID. Reordering, adding, or removing Spaces never attaches a name to the wrong
 Space. Full-screen app Spaces have no UUID, so they are labeled with the app's
 name and can't be renamed.
 
-## Private APIs
+## 🔍 Private APIs
 
 macOS has no public API for Spaces. All private calls are in
 [`SpaceProvider.swift`](Sources/SpaceName/SpaceProvider.swift), declared with
@@ -134,7 +177,7 @@ inject code into Dock.app, which requires partially disabling System Integrity
 Protection. Posting the user's own Mission Control shortcuts is slower and needs
 Accessibility permission, but it goes through Dock and stays consistent.
 
-## Layout
+## 🗂 Project layout
 
 ```
 Package.swift                 SwiftPM manifest
