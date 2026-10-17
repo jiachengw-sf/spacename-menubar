@@ -15,8 +15,12 @@ final class MissionControlOverlay {
     /// Beta, so off unless the user turns it on in Settings.
     static var isEnabled: Bool {
         get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? false }
-        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+        set {
+            UserDefaults.standard.set(newValue, forKey: enabledKey)
+            NotificationCenter.default.post(name: didChangeNotification, object: nil)
+        }
     }
+    static let didChangeNotification = Notification.Name("SpaceName.missionControlNamesChanged")
 
     private static let idleInterval: TimeInterval = 0.25
     private static let trackingInterval: TimeInterval = 1.0 / 30
@@ -40,27 +44,52 @@ final class MissionControlOverlay {
         self.store = store
     }
 
-    /// Keeps App Nap from throttling the poll timer. A windowless menu bar app is
-    /// napped soon after launch, and then Mission Control opening goes unnoticed.
+    /// While on, keeps App Nap from throttling the poll timer. A windowless menu bar
+    /// app is napped soon after launch, and then Mission Control opening goes unnoticed.
     private var activity: NSObjectProtocol?
+    private var inputMonitor: Any?
+    private var spaceObserver: NSObjectProtocol?
 
+    /// Watches the setting. Nothing runs (no polling, no App Nap exemption, no
+    /// input monitoring) unless the user turns the beta on.
     func start() {
-        activity = ProcessInfo.processInfo.beginActivity(
-            options: [.userInitiatedAllowingIdleSystemSleep],
-            reason: "Watch for Mission Control to show Space names")
-        ProcessInfo.processInfo.disableAutomaticTermination("Menu bar app")
-        schedule(interval: Self.idleInterval)
+        NotificationCenter.default.addObserver(forName: Self.didChangeNotification, object: nil,
+                                               queue: .main) { [weak self] _ in self?.applySetting() }
+        applySetting()
+    }
 
-        // A click or key press in Mission Control usually closes it, but the Dock keeps
-        // reporting the old label positions until its closing animation ends. Hide right
-        // away; if Mission Control stays open, the tags fade back in once things settle.
-        NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .keyDown]) { [weak self] _ in
-            self?.hideUntilSettled()
-        }
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            self?.hideUntilSettled()
+    private func applySetting() {
+        let running = timer != nil
+        if Self.isEnabled, !running {
+            activity = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep],
+                reason: "Watch for Mission Control to show Space names")
+            schedule(interval: Self.idleInterval)
+
+            // A click or key press in Mission Control usually closes it, but the Dock keeps
+            // reporting the old label positions until its closing animation ends. Hide right
+            // away; if Mission Control stays open, the tags fade back in once things settle.
+            // Only whether an event happened is used, never which key.
+            inputMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .keyDown]) {
+                [weak self] _ in self?.hideUntilSettled()
+            }
+            spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.hideUntilSettled()
+            }
+        } else if !Self.isEnabled, running {
+            timer?.invalidate()
+            timer = nil
+            if let activity { ProcessInfo.processInfo.endActivity(activity) }
+            activity = nil
+            if let inputMonitor { NSEvent.removeMonitor(inputMonitor) }
+            inputMonitor = nil
+            if let spaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver) }
+            spaceObserver = nil
+            isTracking = false
+            lastFrames = []
+            hideAll()
         }
     }
 

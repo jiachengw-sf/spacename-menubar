@@ -114,7 +114,7 @@ final class SpaceSwitcher: ObservableObject {
             return true
         }
 
-        log.error("No usable shortcut for \(displayName, privacy: .public)")
+        log.error("No usable shortcut for \(displayName, privacy: .private)")
         problem = .noShortcut(spaceName: displayName)
         return false
     }

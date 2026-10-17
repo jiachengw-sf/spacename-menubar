@@ -66,7 +66,7 @@ Control too.
 - **Launch at login**, no Dock icon, and names that stay attached to the right
   desktop even when you reorder, add or remove them.
 
-Requires macOS 14 or later.
+Requires macOS 14 or later. Runs natively on Apple silicon and Intel Macs.
 
 ## ⬇️ Install
 
@@ -82,7 +82,7 @@ Requires macOS 14 or later.
 Only the Xcode Command Line Tools are needed.
 
 ```bash
-scripts/build_app.sh            # release build → build/SpaceName.app
+scripts/build_app.sh            # release build (universal) → build/SpaceName.app
 scripts/build_app.sh debug      # debug build
 open build/SpaceName.app
 ```
