@@ -7,7 +7,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController!
     private var panel: PanelController!
     private var missionControlOverlay: MissionControlOverlay!
-    private var hotkeys: DesktopHotkeys!
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -16,17 +15,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         missionControlOverlay = MissionControlOverlay(store: model.store)
         missionControlOverlay.start()
 
-        hotkeys = DesktopHotkeys { [weak self] number in self?.switchToDesktop(number) }
-        NotificationCenter.default.addObserver(forName: DesktopHotkeys.didChangeNotification, object: nil,
-                                               queue: .main) { [weak self] _ in self?.updateHotkeys() }
-
-        // Re-render the label (and match shortcuts to the desktop count) whenever
-        // the Spaces or their customization change.
+        // Re-render the label whenever the Spaces or their customization change.
         model.$snapshot.combineLatest(model.store.$entries)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot, _ in
                 guard let self else { return }
-                self.updateHotkeys()
                 let store = self.model.store
                 guard let current = snapshot.current else {
                     self.statusItem.update(title: "Desktop ?", style: .plain, space: nil)
@@ -82,29 +75,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     #endif
-
-    /// ⌥N: switch to desktop N on the menu bar display. If switching can't
-    /// happen (permission, shortcuts), open the panel so its banner explains why.
-    private func switchToDesktop(_ number: Int) {
-        model.refresh()
-        let snapshot = model.snapshot
-        guard let target = snapshot.spaces.first(where: { $0.desktopNumber == number }) else {
-            NSSound.beep()
-            return
-        }
-        DesktopHotkeys.afterModifiersReleased { [weak self] in
-            guard let self else { return }
-            let started = self.switcher.switchTo(target, in: snapshot,
-                                                 displayName: self.model.store.displayName(for: target))
-            if !started, let button = self.statusItem.button {
-                self.panel.show(below: button)
-            }
-        }
-    }
-
-    private func updateHotkeys() {
-        hotkeys.update(desktopCount: model.snapshot.spaces.filter { !$0.isFullscreen }.count)
-    }
 
     @objc private func togglePanel() {
         guard let button = statusItem.button else { return }

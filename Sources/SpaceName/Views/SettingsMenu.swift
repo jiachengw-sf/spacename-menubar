@@ -1,6 +1,6 @@
 import AppKit
 
-/// The Settings menu: launch at login, desktop shortcuts, Mission Control names, setup links, quit.
+/// The Settings menu: launch at login, Mission Control names, setup links, quit.
 final class SettingsMenu: NSObject {
     private let onOpenSettingsURL: (URL) -> Void
 
@@ -23,16 +23,12 @@ final class SettingsMenu: NSObject {
         login.state = LoginItem.isEnabled || LoginItem.needsApproval ? .on : .off
         menu.addItem(login)
 
-        let shortcuts = item("Desktop Shortcuts (⌥ + Number)", #selector(toggleDesktopShortcuts))
-        shortcuts.state = DesktopHotkeys.isEnabled ? .on : .off
-        menu.addItem(shortcuts)
-
         let overlay = item("Show Names in Mission Control (Beta)", #selector(toggleMissionControlNames))
         overlay.state = MissionControlOverlay.isEnabled ? .on : .off
         menu.addItem(overlay)
 
         menu.addItem(.separator())
-        menu.addItem(item("Mission Control Shortcuts…", #selector(openKeyboardSettings)))
+        menu.addItem(item("Desktop Shortcuts…", #selector(openKeyboardSettings)))
         menu.addItem(item("Accessibility Permission…", #selector(openAccessibilitySettings)))
         menu.addItem(.separator())
 
@@ -49,10 +45,6 @@ final class SettingsMenu: NSObject {
 
     @objc private func toggleLaunchAtLogin() {
         LoginItem.setEnabled(!(LoginItem.isEnabled || LoginItem.needsApproval))
-    }
-
-    @objc private func toggleDesktopShortcuts() {
-        DesktopHotkeys.isEnabled.toggle()
     }
 
     @objc private func toggleMissionControlNames() {

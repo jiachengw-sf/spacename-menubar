@@ -20,6 +20,21 @@ final class SpaceSwitcher: ObservableObject {
     private struct Hotkey {
         let keyCode: CGKeyCode
         let flags: CGEventFlags
+        /// The key's character as stored by System Settings (e.g. "1"), if any.
+        var character: String? = nil
+
+        /// Menu-style label in Apple's modifier order, e.g. "⌃1" or "⌃⌥3".
+        var label: String? {
+            let modifiers: [(CGEventFlags, String)] = [(.maskControl, "⌃"), (.maskAlternate, "⌥"),
+                                                       (.maskShift, "⇧"), (.maskCommand, "⌘")]
+            let prefix = modifiers.filter { flags.contains($0.0) }.map(\.1).joined()
+            // System Settings usually stores no character for these, only the key code.
+            let named: [CGKeyCode: String] = [123: "←", 124: "→", 125: "↓", 126: "↑",
+                                              18: "1", 19: "2", 20: "3", 21: "4", 23: "5",
+                                              22: "6", 26: "7", 28: "8", 25: "9", 29: "0"]
+            guard let key = named[keyCode] ?? character?.uppercased() else { return nil }
+            return prefix + key
+        }
     }
 
     // Symbolic hotkey ids in com.apple.symbolichotkeys.
@@ -55,6 +70,13 @@ final class SpaceSwitcher: ObservableObject {
     }
 
     /// True when `space` can't be reached with a single "Switch to Desktop N" shortcut.
+    /// The macOS "Switch to Desktop N" shortcut for `space` as the user set it up
+    /// (e.g. "⌃1"), or nil if it's off. Shown next to each row in the panel.
+    func shortcutLabel(for space: Space) -> String? {
+        guard let number = space.shortcutNumber, number <= 16 else { return nil }
+        return hotkey(id: Self.desktopBaseID + number)?.label
+    }
+
     func lacksDirectShortcut(_ space: Space) -> Bool {
         guard let number = space.shortcutNumber, number <= 16 else { return true }
         return hotkey(id: Self.desktopBaseID + number) == nil
@@ -120,7 +142,9 @@ final class SpaceSwitcher: ObservableObject {
 
         if let params = (entry["value"] as? [String: Any])?["parameters"] as? [Int], params.count == 3,
            params[1] != 0xFFFF {
-            return Hotkey(keyCode: CGKeyCode(params[1]), flags: CGEventFlags(rawValue: UInt64(params[2])))
+            let character = (1...0x7E).contains(params[0]) ? String(UnicodeScalar(UInt8(params[0]))) : nil
+            return Hotkey(keyCode: CGKeyCode(params[1]), flags: CGEventFlags(rawValue: UInt64(params[2])),
+                          character: character)
         }
         return defaultHotkey(id: id)
     }
@@ -132,8 +156,10 @@ final class SpaceSwitcher: ObservableObject {
         case Self.moveRightID:
             return Hotkey(keyCode: 124, flags: CGEventFlags(rawValue: Self.arrowFlags))
         case (Self.desktopBaseID + 1)...(Self.desktopBaseID + 10):
-            return Hotkey(keyCode: Self.digitKeyCodes[id - Self.desktopBaseID - 1],
-                          flags: CGEventFlags(rawValue: Self.controlFlag))
+            let index = id - Self.desktopBaseID - 1
+            return Hotkey(keyCode: Self.digitKeyCodes[index],
+                          flags: CGEventFlags(rawValue: Self.controlFlag),
+                          character: String(Array("1234567890")[index]))
         default:
             return nil
         }

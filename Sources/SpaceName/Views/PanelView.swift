@@ -45,9 +45,10 @@ struct PanelView: View {
 
             MenuSeparator()
             if missingDirectShortcuts {
-                MenuActionRow(title: "Turn On Faster Switching…",
-                              help: "In Keyboard Shortcuts › Mission Control, turn on \"Switch to Desktop N\". "
-                                + "Until then, SpaceName steps through Spaces with Control-arrow keys.") {
+                MenuActionRow(title: "Turn On Desktop Shortcuts…",
+                              help: "In Keyboard Shortcuts › Mission Control, turn on \"Switch to Desktop N\" "
+                                + "for each desktop. You get ⌃1, ⌃2… shortcuts, and SpaceName jumps straight "
+                                + "there instead of stepping through each desktop.") {
                     onOpenSettingsURL(SpaceSwitcher.keyboardSettingsURL)
                 }
             }
@@ -67,7 +68,7 @@ struct PanelView: View {
                              name: store.displayName(for: space),
                              isCurrent: space.id == model.snapshot.currentID,
                              canRename: store.canCustomize(space),
-                             shortcut: DesktopHotkeys.label(forDesktop: space.desktopNumber),
+                             shortcut: switcher.shortcutLabel(for: space),
                              onSwitch: onSwitch)
             }
         }

@@ -11,14 +11,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jiachengw-sf/SpaceName/releases/latest"><b>⬇ Download</b></a> ·
+  <a href="https://github.com/jiachengw-sf/spacename-menubar/releases/latest"><b>⬇ Download</b></a> ·
   <a href="#-features">Features</a> ·
   <a href="#-build-from-source">Build from source</a> ·
   <a href="#-private-apis">How it works</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/jiachengw-sf/SpaceName?label=release&color=ff5ca8" alt="Latest release">
+  <img src="https://img.shields.io/github/v/release/jiachengw-sf/spacename-menubar?label=release&color=ff5ca8" alt="Latest release">
   <img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
   <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-0A84FF" alt="SwiftUI and AppKit">
@@ -55,10 +55,9 @@ Control too.
   and bold/italic style.
 - **Native-looking dropdown:** styled like the Wi-Fi menu (Liquid Glass on macOS 26),
   in light or dark mode. Click a desktop to switch to it.
-- **Keyboard shortcuts:** ⌥1 – ⌥9 jump to desktops 1–9, ⌥0 to desktop 10, and
-  ⌥⇧1 – ⌥⇧6 to desktops 11–16 (the most macOS allows). Only desktops you have get a
-  shortcut; those keys stop typing their special character (™, •, …), so turn shortcuts
-  off in Settings if you need them.
+- **Works with macOS's desktop shortcuts:** each desktop shows its "Switch to Desktop"
+  shortcut (⌃1, ⌃2…) from System Settings. If some are off, *Turn On Desktop Shortcuts…*
+  takes you to the setting (see [Switching setup](#switching-setup)).
 - **Quick rename:** hover a desktop, click the pencil, and type. Return saves, Esc cancels.
 - **Colors and styles:** presets or any custom color, with a light and dark menu bar
   preview and a warning when a color is hard to read.
@@ -72,10 +71,10 @@ Requires macOS 14 or later.
 ## ⬇️ Install
 
 1. Download `SpaceName-<version>.zip` from
-   [Releases](https://github.com/jiachengw-sf/SpaceName/releases/latest), unzip it,
+   [Releases](https://github.com/jiachengw-sf/spacename-menubar/releases/latest), unzip it,
    and move `SpaceName.app` to `/Applications`.
 2. Open it (see the warning above for the first launch).
-3. To switch desktops (clicking a row or ⌥ + number) and to show names in Mission
+3. To switch desktops by clicking a row, and to show names in Mission
    Control, allow SpaceName under *Privacy & Security › Accessibility* when asked.
 
 ## 🛠 Build from source
@@ -108,12 +107,15 @@ macOS ties that permission to the app's code signature.
 
 ### Switching setup
 
-Switching (clicking a row or pressing ⌥ + number) presses your Mission Control shortcuts, using the key bindings
+Clicking a desktop presses your Mission Control shortcuts, using the key bindings
 actually configured in *System Settings › Keyboard › Keyboard Shortcuts… ›
 Mission Control*:
 
-1. **Switch to Desktop N** (off by default): jumps straight there. Turn these on
-   for the best experience.
+1. **Switch to Desktop N** (off by default): jumps straight there, and gives you
+   ⌃1, ⌃2… to switch from the keyboard. Turn these on for the best experience:
+   expand the inner **Mission Control** row (click **›**) and check
+   **Switch to Desktop 1, 2, …** for each desktop. macOS only lists rows for
+   desktops that exist, so check new ones after adding desktops.
 2. **Move left/right a space** (on by default): used as a fallback, stepping
    one Space at a time. This is also the only way to reach full-screen app Spaces.
 
@@ -198,7 +200,6 @@ Sources/SpaceName/
   SpaceStore.swift            JSON persistence keyed by UUID
   LabelStyle.swift            Fonts, colors, contrast check
   SpaceSwitcher.swift         Shortcut lookup and CGEvent posting
-  DesktopHotkeys.swift        ⌥ + number global shortcuts
   DockMissionControl.swift    Reads Mission Control's Spaces bar (Dock internals)
   MissionControlOverlay.swift Name tags drawn over Mission Control
   LoginItem.swift             SMAppService wrapper
