@@ -12,8 +12,9 @@ private let log = Logger(subsystem: "com.jiacheng.SpaceName", category: "mission
 final class MissionControlOverlay {
     static let enabledKey = "showNamesInMissionControl"
 
+    /// Beta, so off unless the user turns it on in Settings.
     static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? false }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
 

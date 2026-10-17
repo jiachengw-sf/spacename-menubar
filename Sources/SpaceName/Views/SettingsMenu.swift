@@ -27,7 +27,7 @@ final class SettingsMenu: NSObject {
         shortcuts.state = DesktopHotkeys.isEnabled ? .on : .off
         menu.addItem(shortcuts)
 
-        let overlay = item("Show Names in Mission Control", #selector(toggleMissionControlNames))
+        let overlay = item("Show Names in Mission Control (Beta)", #selector(toggleMissionControlNames))
         overlay.state = MissionControlOverlay.isEnabled ? .on : .off
         menu.addItem(overlay)
 

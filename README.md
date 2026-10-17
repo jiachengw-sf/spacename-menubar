@@ -32,10 +32,10 @@
 > **Open**, or allow it under *System Settings › Privacy & Security*.
 
 > [!NOTE]
-> **Mission Control names are experimental.** They follow the "Desktop N" labels
-> when you hover the top bar, but can lag during Mission Control's animations and
-> don't appear on the collapsed bar. Turn them off in *SpaceName Settings…* if
-> they bother you.
+> **Mission Control names are in beta and off by default.** To try them, open
+> the SpaceName menu › *SpaceName Settings…* › **Show Names in Mission Control (Beta)**.
+> They cover the "Desktop N" labels when you hover the top bar in Mission Control,
+> but can lag during its animations and don't appear on the collapsed bar.
 
 ## 🪟 What is this?
 
@@ -60,8 +60,8 @@ Control too.
 - **Quick rename:** hover a desktop, click the pencil, and type. Return saves, Esc cancels.
 - **Colors and styles:** presets or any custom color, with a light and dark menu bar
   preview and a warning when a color is hard to read.
-- **Names in Mission Control (experimental):** your names cover the "Desktop N"
-  labels when you hover the top bar in Mission Control (F3).
+- **Names in Mission Control (beta, off by default):** your names cover the
+  "Desktop N" labels when you hover the top bar in Mission Control (F3).
 - **Launch at login**, no Dock icon, and names that stay attached to the right
   desktop even when you reorder, add or remove them.
 
@@ -133,7 +133,7 @@ name tag over each renamed Space's label (see
 through the Dock's accessibility tree, so it needs the same Accessibility
 permission as switching. While Mission Control is closed it checks for it four
 times a second; while open it follows the labels 30 times a second so tags
-keep up when the bar expands on hover. Turn it off in *SpaceName Settings…*.
+keep up when the bar expands on hover. It is off by default; turn it on in *SpaceName Settings…* › **Show Names in Mission Control (Beta)**.
 
 ## 💾 Data
 
