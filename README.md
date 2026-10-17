@@ -15,6 +15,17 @@ custom name, color, and bold/italic style per Space.
 
 Requires macOS 14+. No Dock icon (`LSUIElement`).
 
+## Install a release
+
+1. Download `SpaceName-<version>.zip` from
+   [Releases](https://github.com/jiachengw-sf/SpaceName/releases), unzip it, and
+   move `SpaceName.app` to `/Applications`.
+2. The app isn't signed with an Apple Developer ID or notarized, so macOS blocks
+   the first launch. Right-click the app and choose **Open**, or allow it under
+   *System Settings › Privacy & Security* after a blocked launch.
+3. To use the ↗ switch button and names in Mission Control, allow SpaceName
+   under *Privacy & Security › Accessibility* when asked.
+
 ## Build and run
 
 Only the Xcode Command Line Tools are needed.
