@@ -17,15 +17,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         missionControlOverlay.start()
 
         hotkeys = DesktopHotkeys { [weak self] number in self?.switchToDesktop(number) }
-        hotkeys.update()
         NotificationCenter.default.addObserver(forName: DesktopHotkeys.didChangeNotification, object: nil,
-                                               queue: .main) { [weak self] _ in self?.hotkeys.update() }
+                                               queue: .main) { [weak self] _ in self?.updateHotkeys() }
 
-        // Re-render the label whenever the current Space or its customization changes.
+        // Re-render the label (and match shortcuts to the desktop count) whenever
+        // the Spaces or their customization change.
         model.$snapshot.combineLatest(model.store.$entries)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot, _ in
                 guard let self else { return }
+                self.updateHotkeys()
                 let store = self.model.store
                 guard let current = snapshot.current else {
                     self.statusItem.update(title: "Desktop ?", style: .plain, space: nil)
@@ -36,6 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         model.refresh()
+        // Adding, removing, or reordering desktops in Mission Control posts no
+        // notification, so re-read the layout every few seconds (cheap).
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.model.refresh() }
         #if DEBUG
         installDebugSwitchTrigger()
         #endif
@@ -96,6 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.panel.show(below: button)
             }
         }
+    }
+
+    private func updateHotkeys() {
+        hotkeys.update(desktopCount: model.snapshot.spaces.filter { !$0.isFullscreen }.count)
     }
 
     @objc private func togglePanel() {

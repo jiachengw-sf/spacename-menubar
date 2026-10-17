@@ -55,8 +55,10 @@ Control too.
   and bold/italic style.
 - **Native-looking dropdown:** styled like the Wi-Fi menu (Liquid Glass on macOS 26),
   in light or dark mode. Click a desktop to switch to it.
-- **Keyboard shortcuts:** ⌥1 – ⌥9 jump to desktops 1–9. While they're on, Option-number
-  no longer types its special character (™, •, …); turn them off in Settings if you need those.
+- **Keyboard shortcuts:** ⌥1 – ⌥9 jump to desktops 1–9, ⌥0 to desktop 10, and
+  ⌥⇧1 – ⌥⇧6 to desktops 11–16 (the most macOS allows). Only desktops you have get a
+  shortcut; those keys stop typing their special character (™, •, …), so turn shortcuts
+  off in Settings if you need them.
 - **Quick rename:** hover a desktop, click the pencil, and type. Return saves, Esc cancels.
 - **Colors and styles:** presets or any custom color, with a light and dark menu bar
   preview and a warning when a color is hard to read.
@@ -73,7 +75,7 @@ Requires macOS 14 or later.
    [Releases](https://github.com/jiachengw-sf/SpaceName/releases/latest), unzip it,
    and move `SpaceName.app` to `/Applications`.
 2. Open it (see the warning above for the first launch).
-3. To switch desktops (clicking a row or ⌥1–9) and to show names in Mission
+3. To switch desktops (clicking a row or ⌥ + number) and to show names in Mission
    Control, allow SpaceName under *Privacy & Security › Accessibility* when asked.
 
 ## 🛠 Build from source
@@ -106,7 +108,7 @@ macOS ties that permission to the app's code signature.
 
 ### Switching setup
 
-Switching (clicking a row or pressing ⌥1–9) presses your Mission Control shortcuts, using the key bindings
+Switching (clicking a row or pressing ⌥ + number) presses your Mission Control shortcuts, using the key bindings
 actually configured in *System Settings › Keyboard › Keyboard Shortcuts… ›
 Mission Control*:
 
@@ -196,7 +198,7 @@ Sources/SpaceName/
   SpaceStore.swift            JSON persistence keyed by UUID
   LabelStyle.swift            Fonts, colors, contrast check
   SpaceSwitcher.swift         Shortcut lookup and CGEvent posting
-  DesktopHotkeys.swift        ⌥1–9 global shortcuts
+  DesktopHotkeys.swift        ⌥ + number global shortcuts
   DockMissionControl.swift    Reads Mission Control's Spaces bar (Dock internals)
   MissionControlOverlay.swift Name tags drawn over Mission Control
   LoginItem.swift             SMAppService wrapper

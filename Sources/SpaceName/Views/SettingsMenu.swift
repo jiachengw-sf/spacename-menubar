@@ -23,7 +23,7 @@ final class SettingsMenu: NSObject {
         login.state = LoginItem.isEnabled || LoginItem.needsApproval ? .on : .off
         menu.addItem(login)
 
-        let shortcuts = item("Desktop Shortcuts (⌥1–9)", #selector(toggleDesktopShortcuts))
+        let shortcuts = item("Desktop Shortcuts (⌥ + Number)", #selector(toggleDesktopShortcuts))
         shortcuts.state = DesktopHotkeys.isEnabled ? .on : .off
         menu.addItem(shortcuts)
 
